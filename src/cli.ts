@@ -50,12 +50,18 @@ function friendlyStopReason(raw?: string): string {
   return FRIENDLY_STOP_REASONS[raw] ?? `Sync complete \u2014 ${raw}`;
 }
 
-function warnIfEmpty(totalBookmarks: number): void {
+function warnIfEmpty(totalBookmarks: number, isApi: boolean = false): void {
   if (totalBookmarks > 0) return;
   console.log(`  \u26a0 No bookmarks were found. This usually means:`);
-  console.log(`    \u2022 Chrome needs to be fully quit first (Cmd+Q, not just closing the window)`);
-  console.log(`    \u2022 Keychain access was denied \u2014 check System Settings \u2192 Privacy & Security`);
-  console.log(`    \u2022 You may be logged into a different Chrome profile than the one with X/Twitter\n`);
+  if (isApi) {
+    console.log(`    \u2022 Your X account may not have any bookmarks`);
+    console.log(`    \u2022 OAuth token is missing or expired \u2014 run: ft auth`);
+    console.log(`    \u2022 A different X account may have been authorized than the one with bookmarks\n`);
+  } else {
+    console.log(`    \u2022 Chrome needs to be fully quit first (Cmd+Q, not just closing the window)`);
+    console.log(`    \u2022 Keychain access was denied \u2014 check System Settings \u2192 Privacy & Security`);
+    console.log(`    \u2022 You may be logged into a different Chrome profile than the one with X/Twitter\n`);
+  }
 }
 
 const LOGO = `
@@ -258,7 +264,7 @@ export function buildCli() {
           });
           console.log(`\n  \u2713 ${result.added} new bookmarks synced (${result.totalBookmarks} total)`);
           console.log(`  \u2713 Data: ${dataDir()}\n`);
-          warnIfEmpty(result.totalBookmarks);
+          warnIfEmpty(result.totalBookmarks, true);
           const newCount = await rebuildIndex(result.added);
           if (options.classify && newCount > 0) {
             await classifyNew();
@@ -283,7 +289,7 @@ export function buildCli() {
           console.log(`  ${friendlyStopReason(result.stopReason)}`);
           console.log(`  \u2713 Data: ${dataDir()}\n`);
 
-          warnIfEmpty(result.totalBookmarks);
+          warnIfEmpty(result.totalBookmarks, false);
 
           const newCount = await rebuildIndex(result.added);
           if (options.classify && newCount > 0) {
